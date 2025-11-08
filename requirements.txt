@@ -6,3 +6,7 @@ pandas
 duckdb
 pyarrow 
 openpyxl
+dlt
+dbt
+dbt-duckdb
+dbt-core
