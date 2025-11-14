@@ -1,0 +1,6 @@
+version: 2
+
+sources:
+  - name: staging_data
+    tables:
+      - name: raw_data
