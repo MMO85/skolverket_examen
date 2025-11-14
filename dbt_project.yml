@@ -1,0 +1,11 @@
+name: 'skolverket_examen'
+version: '1.0.0'
+config-version: 2
+
+profile: 'skolverket_examen'
+
+model-paths: ["dbt_project/models", "dbt_project/staging", "dbt_project/marts"]
+
+models:
+  skolverket_examen:
+    +materialized: table
