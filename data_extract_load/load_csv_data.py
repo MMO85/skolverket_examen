@@ -34,7 +34,7 @@ def run_pipeline():
         pipeline_name="csv_ingestion_pipeline",
         destination="duckdb",
         dataset_name="staging_data",
-        dev_mode=True,
+        dev_mode=False,
     )
 
     # run pipeline with our CSV resource
