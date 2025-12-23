@@ -1,47 +1,47 @@
-# file: data_extract_load/load_csv_data.py
-
+from pathlib import Path
 import dlt
-import pandas as pd
-import os
 
-# path to folder where your raw CSV files are stored
-RAW_DATA_PATH = os.path.join(os.path.dirname(__file__), "../raw_data")
+# مسیر فولدر CSV ها
+BASE_DIR = Path(__file__).resolve().parents[1]
+RAW_DATA_DIR = BASE_DIR / "raw_data"
 
+@dlt.resource(
+    name="raw_data",
+    write_disposition="append"
+)
+def skolverket_raw_csv():
+    """
+    Reads all Skolverket CSV files as raw text lines.
+    Each row = one raw line from file + source_file
+    """
+    for csv_file in RAW_DATA_DIR.glob("*.csv"):
+        print(f"Loading file: {csv_file.name}")
 
-@dlt.resource(name="raw_data", write_disposition="replace")
-def csv_resource():
-    # list all CSV files in raw_data folder
-    csv_files = [f for f in os.listdir(RAW_DATA_PATH) if f.endswith(".csv")]
+        # ✅ utf-8-sig برای حذف BOM (خیلی مهم)
+        with open(csv_file, "r", encoding="utf-8-sig", errors="replace") as f:
+            for line in f:
+                raw_line = line.strip("\n").strip("\r")
 
-    for file in csv_files:
-        path = os.path.join(RAW_DATA_PATH, file)
+                # اگر خط کاملاً خالی بود ردش کن
+                if raw_line.strip() == "":
+                    continue
 
-        # read CSV with tolerant settings
-        df = pd.read_csv(path, on_bad_lines="skip", engine="python")
-
-        # normalize schema: convert all columns to string
-        df = df.astype(str)
-
-        # add filename for traceability
-        df["source_file"] = file
-
-        yield df
+                yield {
+                    "raw_line": raw_line,
+                    "source_file": csv_file.name
+                }
 
 
 def run_pipeline():
-    # initialize DLT pipeline
     pipeline = dlt.pipeline(
         pipeline_name="csv_ingestion_pipeline",
         destination="duckdb",
-        dataset_name="staging_data",
-        dev_mode=True,
+        dataset_name="main"
     )
 
-    # run pipeline with our CSV resource
-    load_info = pipeline.run(csv_resource())
+    load_info = pipeline.run(skolverket_raw_csv())
     print(load_info)
 
 
 if __name__ == "__main__":
     run_pipeline()
-    print("CSV data loaded successfully via DLT.")
