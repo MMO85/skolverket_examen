@@ -2,6 +2,7 @@ version: 2
 
 sources:
   - name: skolverket
-    schema: main
+    schema: main   # فعلاً main بذار چون stg_raw_data و raw_data اونجاست
     tables:
       - name: raw_data
+      - name: np_ak9
