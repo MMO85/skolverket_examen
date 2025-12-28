@@ -203,3 +203,184 @@ dbt hittar inte projektet
 ✔ dbt run & test gröna
 ✔ Team-safe setup
 -------------------------------------------------------
+stremlit app/app.py
+Data ingestion (DLT)
+
+Transformation & modeller (dbt + DuckDB)
+
+Visualisering (Streamlit + Plotly + GeoData)
+
+🧱 Systemöversikt
+
+Teknikstack
+
+Python 3.11
+
+DuckDB (lokal analytisk databas)
+
+DLT (data ingestion)
+
+dbt (staging + marts)
+
+Streamlit (dashboard)
+
+GeoPandas + Plotly (kartvisualisering)
+
+Git / GitHub (versionshantering)
+
+ Projektstruktur
+skolverket_examen/
+│
+├── app/
+│   ├── app.py                  # Streamlit-dashboard
+│   └── geo/
+│       ├── raw/                # Original geojson (kommuner, län)
+│       ├── processed/          # Förenklad geo-data (parquet + geojson)
+│       ├── preprocess_geo.py   # Rensar & standardiserar geo-data
+│       └── load_geo.py
+│
+├── data_extract_load/
+│   └── load_csv_data.py        # DLT-pipeline (CSV → DuckDB)
+│
+├── dbt_project/
+│   ├── models/
+│   │   ├── staging/
+│   │   └── marts/
+│   └── dbt_project.yml
+│
+├── csv_ingestion_pipeline.duckdb
+├── requirements.txt
+├── README.md
+└── .gitignore
+
+🔄 Dataflöde (Steg för steg)
+1️⃣ Data ingestion – DLT
+
+Skolverkets CSV-filer laddas till DuckDB via DLT.
+
+source .venv/Scripts/activate
+python data_extract_load/load_csv_data.py
+
+
+Resultat:
+
+DuckDB-fil skapas/uppdateras:
+
+csv_ingestion_pipeline.duckdb
+
+
+Rådata hamnar i schema staging_data
+
+2️⃣ Transformation – dbt
+
+dbt används för:
+
+Staging (rensning, typning)
+
+Business logic
+
+Analytiska marts
+
+cd dbt_project
+python -m dbt.cli.main debug --profiles-dir "$USERPROFILE/.dbt"
+python -m dbt.cli.main run   --profiles-dir "$USERPROFILE/.dbt"
+python -m dbt.cli.main test  --profiles-dir "$USERPROFILE/.dbt"
+
+
+Exempel på marts:
+
+mart_ranked_kommun_ak9
+
+mart_nationella_prov_ak9
+
+mart_parent_trend_ak9
+
+mart_parent_fairness_ak9
+
+3️⃣ Geo-data – Kommuner & Län
+
+Sveriges kommun- och länsgränser används för kartan.
+
+Rådata
+
+app/geo/raw/kommuner.geojson
+
+app/geo/raw/lan.geojson
+
+Bearbetning
+
+Geo-datan:
+
+projiceras till WGS84
+
+trasiga geometrier fixas
+
+förenklas (för prestanda)
+
+standardiseras så att kolumner matchar dbt-data
+
+python app/geo/preprocess_geo.py
+
+
+Resultat:
+
+app/geo/processed/
+├── kommuner.parquet   # kolumner: kommun, kommun_kod, lan_kod, geometry
+├── lan.parquet        # kolumner: lan, lan_kod, geometry
+
+🗺️ Dashboard – Streamlit
+
+Dashboarden visar:
+
+🗺️ Karta
+
+Choropleth-karta över Sveriges kommuner
+
+Färg baserat på score_0_100 (åk 9)
+
+Filter:
+
+Läsår
+
+Ämne
+
+Huvudman
+
+🏆 Ranking
+
+Topp/Nedersta kommuner
+
+Jämförelser inom län och nationellt
+
+🧾 Overview
+
+Textdata och metadata från källfiler
+
+Starta dashboarden från projektroten:
+
+python -m streamlit run app/app.py
+
+✅ Kvalitet & Robusthet
+
+dbt tester (not_null, m.fl.)
+
+Säker SQL-escape i Streamlit
+
+Tydlig matchning mellan geo-data och dbt-marts
+
+Debug-sektion för att visa om kommuner saknar matchning
+
+🎯 Sammanfattning
+
+Detta projekt demonstrerar:
+
+End-to-end data engineering
+
+Analytisk modellering med dbt
+
+Geografisk visualisering
+
+Tydlig separation mellan ingestion, transformation och presentation
+
+Allt körbart lokalt, reproducerbart och granskningsbart.
+--------------------------
