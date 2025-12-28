@@ -2,7 +2,9 @@ version: 2
 
 sources:
   - name: skolverket
-    schema: main   # فعلاً main بذار چون stg_raw_data و raw_data اونجاست
+    # Use the active target schema (e.g. staging_data in your profiles.yml)
+    # This avoids hardcoding "main" and prevents team-specific mismatches.
+    schema: "{{ target.schema }}"
     tables:
       - name: raw_data
       - name: np_ak9

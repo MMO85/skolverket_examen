@@ -2,16 +2,17 @@ version: 2
 
 models:
   - name: slv_cleaned_data
-    description: "Cleaned and standardized data ready for marts"
+    description: "Silver layer: cleaned representation of raw CSV lines with optional URL extraction."
     columns:
+      - name: source_file
+        description: "Original CSV filename for traceability."
+        tests:
+          - not_null
+
       - name: statistik_text
+        description: "Raw line text from source files."
         tests:
           - not_null
 
       - name: url_value
-        tests:
-          - not_null
-
-      - name: source_file
-        tests:
-          - not_null
+        description: "Optional URL extracted from statistik_text (may be null if no URL exists in the line)."
