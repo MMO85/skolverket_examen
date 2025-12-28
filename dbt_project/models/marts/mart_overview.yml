@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: mart_overview
+    description: "Final analytical model for reporting"
+    columns:
+      - name: statistik_text
+        tests:
+          - not_null

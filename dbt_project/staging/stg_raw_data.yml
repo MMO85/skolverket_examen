@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: stg_raw_data
+    description: "Staging layer built from raw CSV ingested via DLT"
+    columns:
+      - name: statistik_fr_n_skolverket
+        description: "Text column from the raw CSV"
+        tests:
+          - not_null
+
+      - name: https_www_skolverket_se
+        description: "URL or value column from CSV"
+        tests:
+          - not_null
+
+      - name: source_file
+        description: "Original CSV filename for traceability"
+        tests:
+          - not_null

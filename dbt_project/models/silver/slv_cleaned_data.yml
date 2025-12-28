@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: slv_cleaned_data
+    description: "Cleaned and standardized data ready for marts"
+    columns:
+      - name: statistik_text
+        tests:
+          - not_null
+
+      - name: url_value
+        tests:
+          - not_null
+
+      - name: source_file
+        tests:
+          - not_null
