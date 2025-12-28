@@ -15,4 +15,5 @@ models:
           - not_null
 
       - name: url_value
-        description: "Optional URL extracted from statistik_text (may be null if no URL exists in the line)."
+        description: "Optional URL extracted from the raw CSV line, if present."
+
