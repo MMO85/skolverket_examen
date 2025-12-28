@@ -121,3 +121,8 @@ logs/
 # Example: local credentials files
 *.env
 *.secrets
+target/
+logs/
+*.duckdb
+duckdb.exe
+duckdb.zip

@@ -10,3 +10,6 @@ dlt
 dbt
 dbt-duckdb
 dbt-core
+streamlit
+duckdb
+pandas
