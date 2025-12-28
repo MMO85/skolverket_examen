@@ -369,6 +369,11 @@ Säker SQL-escape i Streamlit
 Tydlig matchning mellan geo-data och dbt-marts
 
 Debug-sektion för att visa om kommuner saknar matchning
+#
+## Streamlit 
+python app/geo/process_geo.py
+python -m streamlit run app/app.py
+
 
 🎯 Sammanfattning
 
