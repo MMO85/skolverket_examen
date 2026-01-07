@@ -7,7 +7,7 @@ import geopandas as gpd
 import plotly.express as px
 import streamlit as st
 
-
+DBT_SCHEMA = "main"
 # -------------------------
 # App setup
 # -------------------------
@@ -113,7 +113,8 @@ st.sidebar.caption("Körflöde: DLT → dbt run/test → Streamlit")
 if page == "🗺️ Karta (Ranking)":
     st.subheader("🗺️ Sverigekarta – kommunranking (åk 9)")
 
-    table = "staging_data.mart_ranked_kommun_ak9"
+    #table = "staging_data.mart_ranked_kommun_ak9"
+    table = f"{DBT_SCHEMA}.mart_ranked_kommun_ak9"
 
     years = distinct_vals(table, "lasar_start")
     lans = distinct_vals(table, "lan")
@@ -214,7 +215,8 @@ if page == "🗺️ Karta (Ranking)":
 # =========================================
 elif page == "🏆 Topplista":
     st.subheader("🏆 Topplista – kommunranking (åk 9)")
-    table = "staging_data.mart_ranked_kommun_ak9"
+    #table = "staging_data.mart_ranked_kommun_ak9"
+    table = f"{DBT_SCHEMA}.mart_ranked_kommun_ak9"
 
     years = distinct_vals(table, "lasar_start")
     amnen = distinct_vals(table, "amne")
@@ -253,7 +255,9 @@ elif page == "🏆 Topplista":
 # =========================================
 elif page == "🧪 Nationella prov (trend)":
     st.subheader("🧪 Nationella prov (åk 9) – trend över tid")
-    table = "staging_data.mart_nationella_prov_ak9"
+    #table = "staging_data.mart_nationella_prov_ak9"
+    table = f"{DBT_SCHEMA}.mart_nationella_prov_ak9"
+
 
     years = distinct_vals(table, "lasar_start")
     amnen = distinct_vals(table, "amne")
@@ -307,7 +311,9 @@ elif page == "🧪 Nationella prov (trend)":
 # =========================================
 else:
     st.subheader("🧾 Overview")
-    table = "staging_data.mart_overview"
+    #table = "staging_data.mart_overview"
+    table = f"{DBT_SCHEMA}.mart_overview"
+
 
     source_files = distinct_vals(table, "source_file")
     chosen = st.multiselect("source_file (valfritt)", source_files, default=source_files[:1], key="ov_files")

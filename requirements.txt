@@ -14,3 +14,9 @@ streamlit
 duckdb
 pandas
 plotly
+geopandas
+shapely
+pyproj
+fiona
+plotly
+streamlit
