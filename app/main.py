@@ -8,11 +8,11 @@ from backend.updates import update_trend_kommun_lov
 from backend.data_processing import (
     # LOVs
     years, lan_list, kommun_list, huvudman_list, subject_list,
-    trend_metric, choice_metrics, fair_metrics, trend_kommun_lov,
+     choice_metrics, fair_metrics, trend_kommun_lov,
 
     # Trend state
     trend_year, trend_lan, trend_kommun, trend_huvudman, trend_subject,
-    trend_metric, trend_fig, trend_table,
+    trend_metric, trend_fig,
 
     # Choice state
     choice_year, choice_lan, choice_huvudman, choice_subject,

@@ -4,16 +4,24 @@ import plotly.express as px
 from backend.data_processing import trend_df, choice_df, fair_df
 
 
+def _is_all(x) -> bool:
+    """Treat All/ALL/None/empty as All."""
+    if x is None:
+        return True
+    s = str(x).strip()
+    return s == "" or s.lower() == "all"
+
+
 def _apply_common_filters(df: pd.DataFrame, year, lan, kommun, huvudman, subject):
-    if year != "All":
+    if not _is_all(year):
         df = df[df["year"] == year]
-    if lan != "All":
+    if not _is_all(lan):
         df = df[df["lan"] == lan]
-    if kommun is not None and kommun != "All":
+    if kommun is not None and not _is_all(kommun):
         df = df[df["kommun"] == kommun]
-    if huvudman != "All":
+    if not _is_all(huvudman):
         df = df[df["huvudman_typ"] == huvudman]
-    if subject != "All":
+    if not _is_all(subject):
         df = df[df["subject"] == subject]
     return df
 
@@ -35,35 +43,73 @@ def refresh_trend(state):
 
     metric = "score"
 
+    # drop NaN metric
     if metric in df.columns:
         df = df.dropna(subset=[metric])
 
+    # if empty -> blank chart
     if df.empty or metric not in df.columns:
-        state.trend_table = df.head(50)
         fig = px.line(pd.DataFrame({"year": [], "value": []}), x="year", y="value")
         fig.update_layout(title="No data for this selection")
         state.trend_fig = fig
         return
 
-    df_plot = df.sort_values("year")
+    # Color logic: if subject is All -> split by subject, else split by huvudman
+    color = "subject" if _is_all(state.trend_subject) else "huvudman_typ"
 
-    # رنگ منطقی
-    color = "subject" if state.trend_subject == "All" else "huvudman_typ"
+    group_cols = ["year"]
+    if color in df.columns:
+        group_cols.append(color)
 
-    fig = px.line(df_plot, x="year", y=metric, color=color, markers=True)
-    metric_label = METRIC_LABELS.get(metric, metric)
-    fig.update_layout(margin=dict(l=10, r=10, t=40, b=10), title=f"Trend: {metric_label}")
-    fig.update_yaxes(title_text=metric_label)
+    # Aggregate to avoid duplicate rows per year
+    df_plot = (
+        df.groupby(group_cols, as_index=False)[metric]
+          .mean()
+          .sort_values("year")
+    )
+
+    fig = px.line(
+        df_plot,
+        x="year",
+        y=metric,
+        color=(color if color in df_plot.columns else None),
+        markers=True,
+    )
+    # --- Styling: transparent background + nicer look ---
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",   # بیرون نمودار (کل کارت)
+        plot_bgcolor="rgba(0,0,0,0)",    # داخل نمودار
+        margin=dict(l=10, r=10, t=50, b=10),
+        title=dict(x=0.02, xanchor="left"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0.0
+        ),
+    )
+
+    # Grid ملایم
+    fig.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
+    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
+
+    # Line/marker کمی نرم‌تر
+    fig.update_traces(line=dict(width=3), marker=dict(size=7))
+
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=40, b=10),
+        title="Trend: Total Score",
+    )
+    fig.update_yaxes(title_text="Total Score")
 
     state.trend_fig = fig
-    state.trend_table = df_plot.head(50)
 
 
 def on_change_trend(state):
-    # اگر län عوض شد، lov kommun را به‌روز کن
+    # فقط وقتی län عوض شد، kommun lov باید آپدیت بشه
     update_trend_kommun_lov(state)
     refresh_trend(state)
-
 
 
 def on_click_trend(state):
@@ -72,8 +118,11 @@ def on_click_trend(state):
 
 def update_trend_kommun_lov(state):
     # اگر län انتخاب نشده -> همه kommunها
-    if state.trend_lan == "All":
+    if _is_all(state.trend_lan):
         state.trend_kommun_lov = ["All"] + sorted(trend_df["kommun"].dropna().unique().tolist())
+        # اگر kommun فعلی داخل لیست نیست، ریست کن
+        if state.trend_kommun not in state.trend_kommun_lov:
+            state.trend_kommun = "All"
         return
 
     # kommun های همان län
@@ -84,7 +133,6 @@ def update_trend_kommun_lov(state):
     # اگر kommun فعلی داخل لیست جدید نیست، ریست کن
     if state.trend_kommun not in state.trend_kommun_lov:
         state.trend_kommun = "All"
-
 
 
 # ---------------- CHOICE ----------------
