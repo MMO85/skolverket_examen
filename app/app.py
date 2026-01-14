@@ -1,5 +1,5 @@
 import taipy.gui.builder as tgb
-from .layout import render_layout
+from layout import render_layout
 
 def build_pages():
 
