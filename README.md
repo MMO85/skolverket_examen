@@ -23,7 +23,7 @@ Installera beroenden:
 pip install -r requirements.txt
 
 
-Filen requirements.txt bör innehålla:
+requirements.txts innehålla:
 
 dlt
 pandas
