@@ -1,0 +1,9 @@
+skolverket_examen:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: C:/repo/skolverket_examen/csv_ingestion_pipeline.duckdb
+      schema: staging_data
+      threads: 4
+      
