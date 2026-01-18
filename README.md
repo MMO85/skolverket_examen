@@ -52,7 +52,9 @@ Så kör du pipelinen
 I projektroten, kör:
 
 python data_extract_load/load_csv_data.py
-
+--$ python -c "import duckdb; con=duckdb.connect('csv_ingestion_pipeline.duckdb'); print(con.execute(\"select count(distinct _dlt_load_id) from staging_data.raw_data\").fetchone())"
+(1,) den 1 an är rätt svar. 
+(.venv)
 
 Vid lyckad körning visas ett meddelande i stil med:
 
