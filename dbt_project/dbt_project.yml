@@ -16,4 +16,17 @@ clean-targets: ["target", "dbt_packages"]
 
 models:
   skolverket_examen:
-    +materialized: table
+    # ریشه‌ی dbt_project/staging/
+    staging:
+      +materialized: view
+
+    # ریشه‌ی dbt_project/models/
+    models:
+      silver:
+        +materialized: table
+      marts:
+        +materialized: table
+
+    # ریشه‌ی dbt_project/marts/
+    marts:
+      +materialized: table
