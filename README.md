@@ -391,3 +391,190 @@ Tydlig separation mellan ingestion, transformation och presentation
 
 Allt körbart lokalt, reproducerbart och granskningsbart.
 --------------------------
+
+
+
+
+
+karta.
+# Skolverket Examen – DuckDB + dlt + dbt + Streamlit
+
+Det här projektet bygger en liten, reproducerbar datapipeline för Skolverkets öppna CSV:er:
+
+1) **DLT** läser alla CSV-filer i `raw_data/` och laddar raderna till **DuckDB** (`staging_data.raw_data`)  
+2) Vi **synkar** alltid databasen till *senaste* körningen (så att inga gamla rader ligger kvar)  
+3) **dbt** transformerar `raw_data` → `stg_*` (staging) → `marts` (analysmodeller)  
+4) **Streamlit** visar Sverigekarta per kommun + jämförelse Top/Bottom
+
+---
+
+## Projektstruktur (översikt)
+
+- `raw_data/` – dina CSV-filer (in-data)
+- `csv_ingestion_pipeline.duckdb` – DuckDB-databasen (skapas/uppdateras)
+- `data_extract_load/load_csv_data.py` – kör DLT + sync + dbt run/test (end-to-end)
+- `dbt_project/` – dbt-projekt (modeller, macros, profiles.yml, dbt_project.yml)
+- `app/app_karta.py` – Streamlit-dashboard (karta + jämförelser)
+- `app/geo/processed/kommuner.parquet` – kommungeometri för kartan
+- `preprocess_geo.py` – (om du behöver bygga om geodata/parquet)
+
+---
+
+## Förkrav
+
+- Python 3.12+
+- Git
+- (Windows) PowerShell/Windows Terminal rekommenderas. MSYS/Git Bash funkar men kan ge “Permission denied” på vissa entrypoints.
+
+---
+
+## Installation
+
+### 1) Skapa och aktivera venv
+
+**Windows (PowerShell):**
+```bash
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+Git Bash/MSYS:
+
+bash
+Kopiera kod
+python -m venv .venv
+source .venv/Scripts/activate
+2) Installera dependencies
+bash
+Kopiera kod
+pip install -r requirements.txt
+Exakta Python-paket (från requirements.txt)
+Nedan visas exakt innehåll från requirements.txt i repo-root.
+
+<!-- REQUIREMENTS_START -->
+txt
+Kopiera kod
+(autogenereras från requirements.txt)
+<!-- REQUIREMENTS_END -->
+Uppdatera paketlistan i README automatiskt
+Kör ett av följande (beroende på terminal):
+
+Git Bash/MSYS (från repo-root):
+
+bash
+Kopiera kod
+python - <<'PY'
+from pathlib import Path
+req = Path("requirements.txt").read_text(encoding="utf-8").rstrip()
+readme = Path("README.md").read_text(encoding="utf-8")
+
+start = "<!-- REQUIREMENTS_START -->"
+end = "<!-- REQUIREMENTS_END -->"
+
+before = readme.split(start)[0] + start
+after = readme.split(end)[1]
+block = "\n```txt\n" + req + "\n```\n"
+
+Path("README.md").write_text(before + "\n" + block + end + after, encoding="utf-8")
+print("README.md uppdaterad med requirements.txt ✅")
+PY
+PowerShell (från repo-root):
+
+powershell
+Kopiera kod
+python -c @"
+from pathlib import Path
+req = Path('requirements.txt').read_text(encoding='utf-8').rstrip()
+readme = Path('README.md').read_text(encoding='utf-8')
+start = '<!-- REQUIREMENTS_START -->'
+end   = '<!-- REQUIREMENTS_END -->'
+before = readme.split(start)[0] + start
+after  = readme.split(end)[1]
+block = '\n```txt\n' + req + '\n```\n'
+Path('README.md').write_text(before + '\n' + block + end + after, encoding='utf-8')
+print('README.md uppdaterad med requirements.txt ✅')
+"@
+Körflöde (rekommenderat)
+1) Ladda data + sync + dbt (allt i ett)
+bash
+Kopiera kod
+python data_extract_load/load_csv_data.py
+Vad scriptet gör:
+
+Läser alla CSV i raw_data/
+
+Laddar rader till staging_data.raw_data via dlt
+
+Tar bort allt utom senaste _dlt_load_id (så databasen alltid matchar senaste ingestion)
+
+Kör:
+
+python -m dbt.cli.main run
+
+python -m dbt.cli.main test
+
+Scriptet sätter DBT_PROFILES_DIR till dbt_project/ så att dbt alltid hittar rätt profiles.yml.
+
+2) Starta Streamlit-dashboard
+Kör från repo-root:
+
+bash
+Kopiera kod
+python -m streamlit run app/app_karta.py
+Om du får Permission denied på streamlit-kommandot (vanligt i MSYS):
+
+använd alltid python -m streamlit ... som ovan.
+
+dbt – modeller och materialisering
+Staging-modeller (stg_*) är byggda för att vara snabba och lätta (ofta view)
+
+Marts (mart_*) är tabeller för stabil analys/prestanda
+
+Centrala modeller:
+
+mart_ranked_kommun_ak9 – ranking/score per kommun (åk9)
+
+mart_budget_per_elev_kommun – budget per elev per kommun och läsår
+
+Streamlit – vad som visas
+Dashboarden har vyer för:
+
+Karta (Ranking) – choropleth över kommuner med blå färgskala
+
+Karta (Budget per elev) – choropleth + Top/Bottom-jämförelse mellan kommuner
+
+Målet är att endast visa Sverigekartan (inte världskartan). Kartans center/zoom är inställd för Sverige.
+
+Snabbcheck
+Har vi data?
+
+bash
+Kopiera kod
+python -c "import duckdb; con=duckdb.connect('csv_ingestion_pipeline.duckdb'); print(con.execute(\"select count(*) from staging_data.raw_data\").fetchone())"
+Finns mart-tabellerna?
+
+bash
+Kopiera kod
+python -c "import duckdb; con=duckdb.connect('csv_ingestion_pipeline.duckdb'); print(con.execute(\"select table_name, table_type from information_schema.tables where table_schema='staging_data' and table_name like 'mart_%' order by 1\").fetchall())"
+Vanliga problem & fixar
+dbt hittas inte / fel modul
+Använd alltid:
+
+bash
+Kopiera kod
+python -m dbt.cli.main --version
+python -m dbt.cli.main run
+python -m dbt.cli.main test
+dbt kan inte läsa profiles.yml
+bash
+Kopiera kod
+cd dbt_project
+export DBT_PROFILES_DIR="$(pwd)"
+python -m dbt.cli.main debug
+dbt kan inte öppna DuckDB-filen (fel sökväg)
+Kontrollera path: i output från python -m dbt.cli.main debug.
+
+Nästa steg (förbättringar)
+“Klick på kommun → detaljer” (trend/tooltip + småkort)
+
+Mer dbt-testning (uniqueness på kommun_kod + lasar_start, not_null på viktiga mått)
+
+Deployment (Streamlit Community Cloud / Docker)
