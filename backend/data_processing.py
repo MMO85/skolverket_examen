@@ -1,5 +1,7 @@
 import pandas as pd
 from backend.db import load_table
+from backend.db import query_df
+from backend.charts import chart_behorighet_gender
 
 TREND_TABLE = "main.mart_parent_trend_ak9"
 CHOICE_TABLE = "main.mart_parent_choice_ak1_9"
@@ -78,3 +80,28 @@ fair_subject = "All"
 #fair_metric = "fairness_score"
 fair_fig = None
 fair_table = None
+
+#----------------Behörighet state ----------------
+from backend.db import get_connection
+
+def load_mart_behorighet_national_gender():
+    con = get_connection()
+    return con.execute("""
+        select kon, program, behorighet_pct
+        from main.mart_behorighet_national_gender_2024_25
+        order by program, kon
+    """).df()
+
+
+# Figure state
+beh_fig = None
+
+def build_behorighet_gender_figure(year: str):
+    # اگر بعداً چند سال داشتی، اینجا می‌تونه فیلتر سال بخوره.
+    df = query_df("""
+        select kon, program, behorighet_pct
+        from main.mart_behorighet_national_gender_2024_25
+        order by program, kon
+    """)
+    return chart_behorighet_gender(df)
+
