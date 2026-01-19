@@ -36,3 +36,6 @@ def distinct_values(table: str, col: str, limit: int = 500) -> list:
     """
     df = query_df(sql)
     return df["v"].tolist() if not df.empty else []
+
+def get_connection():
+    return _connect()

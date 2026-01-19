@@ -1,6 +1,8 @@
 import pandas as pd
 import plotly.express as px
 from backend.data_processing import trend_df, choice_df, fair_df
+from backend.data_processing import build_behorighet_gender_figure
+
 
 
 def _is_all(x) -> bool:
@@ -424,3 +426,10 @@ def on_change_parent_choice(state):
 
 def on_click_parent_choice(state):
     refresh_parent_choice(state)
+
+
+def refresh_behorighet_gender(state):
+    state.beh_fig = build_behorighet_gender_figure("2024/25")
+
+
+
