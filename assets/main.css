@@ -44,3 +44,56 @@
   border-color: #b3ccff !important;
   color: #1a4fd8 !important;
 }
+
+/* ===== Global ===== */
+body {
+  background-color: #f5f7fa;
+  font-family: Inter, Arial, sans-serif;
+}
+
+/* ===== Cards ===== */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+/* فاصله بین کارت‌ها */
+.container {
+  max-width: 1200px;
+  margin: auto;
+}
+
+/* ===== Page Titles ===== */
+h1, h2 {
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+h3 {
+  color: #374151;
+}
+
+/* ===== Filters panel ===== */
+.taipy-selector select {
+  border-radius: 8px;
+}
+
+/* ===== Buttons ===== */
+.taipy-button button {
+  border-radius: 8px;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+}
+
+.taipy-button button:hover {
+  background-color: #1E40AF;
+}
+
+/* ===== Hide default Taipy menu (اگر navbar سفارشی داری) ===== */
+.taipy-navbar {
+  display: none !important;
+}
+

@@ -9,8 +9,6 @@ from backend.updates import on_change_parent_choice, on_click_parent_choice
 
 with tgb.Page() as kpi_parent_choice_page:
     with tgb.part(class_name="container card"):
-        tgb.text("# KPI — Parent Choice", mode="md")
-
         with tgb.layout(columns="2 1"):
             with tgb.part(class_name="card"):
                 tgb.text("### Kommunal vs Enskild per kommun (100% stacked)", mode="md")

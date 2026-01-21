@@ -9,8 +9,6 @@ from backend.updates import on_change_fairness, on_click_fairness, refresh_fairn
 
 with tgb.Page() as kpi_fairness_page:
     with tgb.part(class_name="container card"):
-        tgb.navbar()
-        tgb.text("# KPI — Fairness", mode="md")
 
         with tgb.layout(columns="2 1"):
             with tgb.part(class_name="card"):

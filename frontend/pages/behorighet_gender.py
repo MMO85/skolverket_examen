@@ -5,10 +5,6 @@ from backend.updates import refresh_behorighet_gender
 
 with tgb.Page() as behorighet_gender_page:
     with tgb.part(class_name="container card"):
-        tgb.navbar()
-        tgb.text("# Behörighet till gymnasieskolan", mode="md")
-        tgb.text("### Flickor vs Pojkar – Nationellt (2024/25)", mode="md")
-
         with tgb.part(class_name="card"):
             tgb.chart(figure="{beh_fig}", mode="plotly")
 

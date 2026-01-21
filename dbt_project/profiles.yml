@@ -3,7 +3,5 @@ skolverket_examen:
   outputs:
     dev:
       type: duckdb
-      path: C:/repo/skolverket_examen/csv_ingestion_pipeline.duckdb
-      schema: staging_data
-      threads: 4
-      
+      path: "{{ env_var('DUCKDB_PATH', 'csv_ingestion_pipeline.duckdb') }}"
+      schema: main
