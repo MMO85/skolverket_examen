@@ -17,7 +17,7 @@ def show_tables() -> pd.DataFrame:
     return query_df("SHOW ALL TABLES")
 
 def table_info(table: str) -> pd.DataFrame:
-    # table should be schema-qualified, e.g. main.mart_parent_trend_ak9
+    # table should be schema-qualified, e.g. mart_parent_trend_ak9
     return query_df(f"PRAGMA table_info('{table}')")
 
 def load_table(table: str, limit: int | None = None) -> pd.DataFrame:
