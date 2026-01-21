@@ -2,6 +2,10 @@ import pandas as pd
 import plotly.express as px
 from backend.data_processing import trend_df, choice_df, fair_df
 from backend.data_processing import build_behorighet_gender_figure
+from backend.data_processing import (
+    build_karta_budget_figure,   # (fig_map, df_budget) برای یک سال
+    build_top_bottom_budget,     # (fig_top, fig_bot) از df_budget
+    query_df,)   # ✅ از backend.db میاد داخل data_processing و اینجا قابل استفاده است
 
 
 
@@ -432,4 +436,33 @@ def refresh_behorighet_gender(state):
     state.beh_fig = build_behorighet_gender_figure("2024/25")
 
 
+## ------------------ karta (BUDGET only) ------------------
+def refresh_karta(state):
+    """
+    Budget per elev per kommun (senaste tillgängliga år).
+    - بدون Ranking
+    - بدون فیلتر
+    - Top 10 / Bottom 10
+    """
 
+    # آخرین سال موجود را مستقیم از DB می‌گیریم
+    dfy = query_df("""
+        select max(lasar_start) as y
+        from main.mart_budget_per_elev_kommun
+    """)
+    if dfy.empty or dfy.iloc[0]["y"] is None:
+        state.karta_fig = None
+        state.karta_top_fig = None
+        state.karta_bot_fig = None
+        return
+
+    year = int(dfy.iloc[0]["y"])
+
+    fig, df_budget = build_karta_budget_figure(year)
+    state.karta_fig = fig
+
+    state.karta_top_fig, state.karta_bot_fig = build_top_bottom_budget(df_budget, 10)
+
+
+def on_click_karta(state):
+    refresh_karta(state)

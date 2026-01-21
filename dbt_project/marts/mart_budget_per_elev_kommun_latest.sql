@@ -10,4 +10,4 @@ from (
     ) as rn
   from {{ ref('mart_budget_per_elev_kommun') }}
 ) t
-where rn = 1;
+where rn = 1
