@@ -8,9 +8,9 @@ from backend.charts import chart_behorighet_gender
 from pathlib import Path
 from config import BASE_DIR
 
-TREND_TABLE = "main.mart_parent_trend_ak9"
-CHOICE_TABLE = "main.mart_parent_choice_ak1_9"
-FAIR_TABLE = "main.mart_parent_fairness_ak9"
+TREND_TABLE = "mart_parent_trend_ak9"
+CHOICE_TABLE = "mart_parent_choice_ak1_9"
+FAIR_TABLE = "mart_parent_fairness_ak9"
 
 # Load once
 trend_df = load_table(TREND_TABLE)
@@ -93,7 +93,7 @@ def load_mart_behorighet_national_gender():
     con = get_connection()
     return con.execute("""
         select kon, program, behorighet_pct
-        from main.mart_behorighet_national_gender_2024_25
+        from mart_behorighet_national_gender_2024_25
         order by program, kon
     """).df()
 
@@ -105,7 +105,7 @@ def build_behorighet_gender_figure(year: str):
     # اگر بعداً چند سال داشتی، اینجا می‌تونه فیلتر سال بخوره.
     df = query_df("""
         select kon, program, behorighet_pct
-        from main.mart_behorighet_national_gender_2024_25
+        from mart_behorighet_national_gender_2024_25
         order by program, kon
     """)
     return chart_behorighet_gender(df)
@@ -192,7 +192,7 @@ def geojson_from_geo_simplified(tolerance: float = 0.01) -> dict:
 # KARTA: budget map + top/bottom
 # -------------------------
 def build_karta_budget_figure(year: int) -> tuple["px.Figure", pd.DataFrame]:
-    table = "main.mart_budget_per_elev_kommun"
+    table = "mart_budget_per_elev_kommun"
 
     df = query_df(f"""
         select kommun_kod, kommun, totalt_per_elev
