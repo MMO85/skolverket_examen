@@ -3,5 +3,5 @@ skolverket_examen:
   outputs:
     dev:
       type: duckdb
-      path: "{{ env_var('DUCKDB_PATH', 'csv_ingestion_pipeline.duckdb') }}"
+      path: "../csv_ingestion_pipeline.duckdb"
       schema: main
