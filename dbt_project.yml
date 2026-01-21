@@ -5,9 +5,9 @@ config-version: 2
 profile: skolverket_examen
 
 model-paths:
-  - dbt_project/staging
-  - dbt_project/models
-  - dbt_project/marts
+  - staging
+  - models
+  - marts
 
 analysis-paths: ["analysis"]
 test-paths: ["tests"]
