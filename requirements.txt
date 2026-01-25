@@ -1,7 +1,5 @@
-python-dotenv>=1.2.1
 requests>=2.32.5
 streamlit>=1.51.0
-watchdog>=6.0.0
 pandas
 duckdb
 pyarrow 
@@ -19,4 +17,6 @@ shapely
 pyproj
 fiona
 plotly
-streamlit
+taipy-gui==4.1.0
+python-dotenv==1.0.1
+watchdog==4.0.1
