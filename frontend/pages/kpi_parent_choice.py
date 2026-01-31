@@ -11,7 +11,7 @@ with tgb.Page() as kpi_parent_choice_page:
     with tgb.part(class_name="container card"):
         with tgb.layout(columns="2 1"):
             with tgb.part(class_name="card"):
-                tgb.text("# Which Type of School Do Parents Prefer for Their Children?", mode="md")
+                tgb.text("#### Which Type of School Do Parents Prefer for Their Children?", mode="md")
                 tgb.chart(figure="{parent_choice_fig_stack}", mode="plotly")
                 tgb.chart(figure="{parent_choice_fig_trend}", mode="plotly")
                 #tgb.table("{parent_choice_table}", page_size=10)
