@@ -49,13 +49,13 @@ lan_list = _lov(trend_df, "lan")
 kommun_list = _lov(trend_df, "kommun")
 huvudman_list = _lov(trend_df, "huvudman_typ")
 subject_list = _lov(trend_df, "subject")
-subject_list = ["All"] + sorted({s for s in subject_list if str(s).strip() != "All"})
+subject_list = ["All"] + sorted({s for s in subject_list if str(s).strip().lower() != "all"})
 
 # ---------------- Parent Choice state ----------------
 
 parent_choice_year = "All"
 parent_choice_lan = "All"
-parent_choice_top_n = 30
+parent_choice_top_n = 10
 parent_choice_kommun_trend = "All"
 
 parent_choice_fig_stack = None
