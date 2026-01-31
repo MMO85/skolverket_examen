@@ -43,7 +43,10 @@ def refresh_trend(state):
         year="All",
         lan=state.trend_lan,
         kommun=state.trend_kommun,
-        huvudman=state.trend_huvudman,
+        huvudman=(    "All"
+        if not _is_all(state.trend_subject)
+        else state.trend_huvudman
+),
         subject=state.trend_subject,
     )
 
@@ -51,6 +54,14 @@ def refresh_trend(state):
 
     if metric in df.columns:
         df = df.dropna(subset=[metric])
+
+    if not df.empty and "year" in df.columns:
+        # مطمئن شو year عددی است
+        df["year"] = pd.to_numeric(df["year"], errors="coerce")
+        df = df.dropna(subset=["year"])
+        if not df.empty:
+            last_year = int(df["year"].max())
+            df = df[df["year"] < last_year]
 
     if df.empty or metric not in df.columns:
         fig = px.line(pd.DataFrame({"year": [], "value": []}), x="year", y="value")
@@ -71,6 +82,7 @@ def refresh_trend(state):
           .sort_values("year")
     )
 
+
     fig = px.line(
         df_plot,
         x="year",
@@ -79,28 +91,71 @@ def refresh_trend(state):
         markers=True,
     )
 
+        # ---- Styling / Layout (clean & no duplicates) ----
     fig.update_layout(
+        title=dict(
+            text="How Grade 9 Scores Have Changed Over Time",
+            x=0.0,
+            xanchor="left",
+            y=0.98,
+            yanchor="top",
+            pad=dict(t=6, r=2),
+            automargin=True,
+        ),
+        showlegend=False,
+        
+        margin=dict(l=80, r=30, t=70, b=70),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=10, r=10, t=50, b=10),
-        title=dict(x=0.02, xanchor="left"),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="left",
-            x=0.0
-        ),
+        modebar_remove=[
+            "zoom2d", "pan2d", "select2d", "lasso2d",
+            "zoomIn2d", "zoomOut2d", "autoScale2d", "resetScale2d"
+        ],
     )
-    fig.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
-    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
-    fig.update_traces(line=dict(width=3), marker=dict(size=7))
 
-    fig.update_layout(
-        margin=dict(l=10, r=10, t=40, b=10),
-        title="Trend: Total Score",
+    fig.update_xaxes(
+        title_text="Year",
+        title_standoff=22,     # year پایین‌تر
+        showgrid=False,        # grid حذف
+        zeroline=False,
+        showline=True,
+        linecolor="rgba(0,0,0,0.18)",
+        tickfont=dict(color="rgba(0,0,0,0.55)"),
+        title_font=dict(color="rgba(0,0,0,0.55)"),
     )
-    fig.update_yaxes(title_text="Total Score")
+
+    fig.update_yaxes(
+        title_text="Performance Percentile (0–100)",
+        range=[0, 100],
+        showgrid=False,        # grid حذف
+        zeroline=False,
+        showline=True,
+        linecolor="rgba(0,0,0,0.18)",
+        tickfont=dict(color="rgba(0,0,0,0.55)"),
+        title_font=dict(color="rgba(0,0,0,0.55)"),
+        automargin=True,
+    )
+
+    fig.update_traces(line=dict(width=3), marker=dict(size=7))
+    last_year = df_plot["year"].max()
+
+    for key, g in df_plot.groupby(color):
+        last_row = g[g["year"] == last_year]
+        if last_row.empty:
+            continue
+
+        fig.add_annotation(
+            x=last_row["year"].iloc[0],
+            y=last_row[metric].iloc[0],
+            text=str(key),
+            showarrow=False,
+            xanchor="left",
+            yanchor="middle",
+            font=dict(size=12, color="rgba(0,0,0,0.7)"),
+            xshift=8,
+        )
+
+
 
     state.trend_fig = fig
 
@@ -134,7 +189,7 @@ def update_trend_kommun_lov(state):
 def refresh_fairness(state):
     df = fair_df.copy()
 
-    # ✅ FIX: normalize year type (Taipy gives "2022" as str, DF has np.int32)
+    # --- year type fix (Taipy may give str) ---
     fair_year = state.fair_year
     if not _is_all(fair_year):
         try:
@@ -142,6 +197,7 @@ def refresh_fairness(state):
         except Exception:
             fair_year = "All"
 
+    # --- filters ---
     df = _apply_common_filters(
         df,
         year=fair_year,
@@ -151,100 +207,121 @@ def refresh_fairness(state):
         subject=state.fair_subject,
     )
 
-    metric = state.fair_metric
-
-    if metric in df.columns:
-        df = df.dropna(subset=[metric])
-
-    if df.empty or metric not in df.columns:
-        state.fair_table = df.head(50)
-        fig = px.bar(pd.DataFrame({"kommun": [], "value": []}), x="kommun", y="value")
-        fig.update_layout(title="No data for this selection")
-        state.fair_fig = fig
-        return
-
-def refresh_fairness(state):
-    df = fair_df.copy()
-
-    # ✅ year type fix
-    fair_year = state.fair_year
-    if not _is_all(fair_year):
-        try:
-            fair_year = int(fair_year)
-        except Exception:
-            fair_year = "All"
-
-    # فیلترها
-    df = _apply_common_filters(
-        df,
-        year=fair_year,
-        lan=state.fair_lan,
-        kommun=None,
-        huvudman=state.fair_huvudman,
-        subject=state.fair_subject,
-    )
-
-    # اگر دیتا نبود
     if df.empty:
         state.fair_table = df.head(50)
-        fig = px.bar(pd.DataFrame({"kommun": [], "value": []}), x="kommun", y="value")
+        fig = px.bar(pd.DataFrame({"kommun": [], "value": []}), x="value", y="kommun", orientation="h")
         fig.update_layout(title="No data for this selection")
         state.fair_fig = fig
         return
 
-    # ✅ 1) آماده‌سازی دیتا (Aggregation صحیح)
+    # --- aggregate to kommun level ---
     df_g = (
-        df.groupby("kommun", as_index=False)[
-            ["betygpoang_flickor", "betygpoang_pojkar"]
-        ]
-        .mean()
+        df.groupby("kommun", as_index=False)[["betygpoang_flickor", "betygpoang_pojkar"]]
+          .mean()
     )
 
-    # Top 30 برای خوانایی
+    # --- Top 15 by absolute gender gap ---
+    TOP_N = 10
     df_g["gap_abs"] = (df_g["betygpoang_flickor"] - df_g["betygpoang_pojkar"]).abs()
-    df_g = df_g.sort_values("gap_abs", ascending=False).head(30)
+    df_g = df_g.sort_values("gap_abs", ascending=False).head(TOP_N)
 
-    # ✅ 2) نمودار دوتایی کنار هم
-    fig = px.bar(
-        df_g,
-        x="kommun",
-        y=["betygpoang_flickor", "betygpoang_pojkar"],
-        barmode="group",
-        labels={"value": "Average grade", "variable": "Group"},
+    # --- reshape to long format for grouped bars (Girls/Boys) ---
+    df_long = df_g.melt(
+        id_vars=["kommun", "gap_abs"],
+        value_vars=["betygpoang_flickor", "betygpoang_pojkar"],
+        var_name="Group",
+        value_name="Average grade points",
     )
+
+    # nicer labels
+    df_long["Group"] = df_long["Group"].replace({
+        "betygpoang_flickor": "Girls",
+        "betygpoang_pojkar": "Boys",
+    })
+
+    # keep kommun order (top gap at top)
+    kommun_order = df_g["kommun"].tolist()
+    df_long["kommun"] = pd.Categorical(df_long["kommun"], categories=kommun_order, ordered=True)
+    df_long = df_long.sort_values("kommun", ascending=False)  # so first appears on top in horizontal bar
+
+    # --- plot: horizontal grouped bar ---
+    fig = px.bar(
+        df_long,
+        x="Average grade points",
+        y="kommun",
+        color="Group",
+        barmode="group",
+        orientation="h",
+    )
+
+    # --- clean title (no clutter line with filters) ---
+    title_text = f"Average Grade Differences Between Girls and Boys {TOP_N} Municipalities"
+    #subtitle = f"{state.fair_subject} • {state.fair_huvudman} • {state.fair_lan} • {state.fair_year}"
 
     fig.update_layout(
-        title=(
-            f"Average grades — Girls vs Boys (Top 30 gap)<br>"
-            f"{state.fair_subject} | {state.fair_huvudman} | {state.fair_lan} | {state.fair_year}"
+        title=dict(
+            text=f"{title_text}<br><span style='font-size:12px;color:rgba(0,0,0,0.55)'></span>",
+            x=0.0,
+            xanchor="left",
+            y=0.92,
+            yanchor="top",
+            automargin=True,
         ),
-        xaxis_tickangle=-40,
+        legend=dict(
+            orientation="h",
+            y=1.08,
+            x=0.0,
+            xanchor="left",
+            title_text="",
+            font=dict(size=12),
+        ),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=10, r=10, t=60, b=10),
-        legend=dict(orientation="h", y=1.02, x=0),
+        margin=dict(l=90, r=20, t=90, b=50),
+        modebar_remove=[
+            "zoom2d", "pan2d", "select2d", "lasso2d",
+            "zoomIn2d", "zoomOut2d", "autoScale2d", "resetScale2d"
+        ],
     )
-    fig.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
-    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
+
+    # --- axes styling (minimal) ---
+    fig.update_xaxes(
+        title_text="Average grade points",
+        showgrid=False,
+        zeroline=False,
+        showline=True,
+        linecolor="rgba(0,0,0,0.18)",
+        tickfont=dict(color="rgba(0,0,0,0.6)"),
+        title_font=dict(color="rgba(0,0,0,0.6)"),
+    )
+
+    fig.update_yaxes(
+        title_text="",  # kommun labels are self-explanatory
+        showgrid=False,
+        zeroline=False,
+        showline=False,
+        tickfont=dict(color="rgba(0,0,0,0.65)"),
+        automargin=True,
+    )
+
+    # slightly thicker bars
+    fig.update_traces(marker_line_width=0)
+
+    # --- table (optional but useful) ---
+    state.fair_table = df_g[["kommun", "betygpoang_flickor", "betygpoang_pojkar", "gap_abs"]].copy()
 
     state.fair_fig = fig
 
- 
-    
 
 
 def on_change_fairness(state):
     refresh_fairness(state)
 
-
 def on_click_fairness(state):
     refresh_fairness(state)
 
 
-
-
 # ---------------- PARENT CHOICE (NO SUBJECT) ----------------
-
 
 def _is_all(x):
     if x is None:
@@ -259,83 +336,144 @@ def refresh_parent_choice(state):
       n_students (int), share (float 0..1)
     """
 
-    # =========================
-    # 1) 100% stacked per kommun (single year)
-    # =========================
     df = choice_df.copy()
 
-    # Filters for the kommun chart
+    # -------------------------
+    # Filters (single year)
+    # -------------------------
     if not _is_all(state.parent_choice_year):
         try:
             y = int(state.parent_choice_year)
             df = df[df["year"] == y]
         except Exception:
-            # اگر year قابل تبدیل نبود، خالی برگردان
             df = df.iloc[0:0]
 
     if not _is_all(state.parent_choice_lan):
         df = df[df["lan"] == state.parent_choice_lan]
 
-    # only Kommunal/Enskild
-    df = df[df["huvudman_typ"].isin(["Kommunal", "Enskild"])].dropna(subset=["share", "n_students"])
+    df = df[df["huvudman_typ"].isin(["Kommunal", "Enskild"])].dropna(subset=["n_students"])
 
     if df.empty:
-        state.parent_choice_fig_stack = px.bar(
-            pd.DataFrame({"kommun": [], "share": [], "huvudman_typ": []}),
-            x="kommun",
-            y="share",
-            color="huvudman_typ",
-            barmode="stack",
-        ).update_layout(title="No data for this selection")
-
-        state.parent_choice_fig_trend = px.line(
-            pd.DataFrame({"year": [], "share": [], "kommun": []}),
-            x="year",
-            y="share",
-            color="kommun",
-        ).update_layout(title="No data for trend selection")
+        state.parent_choice_fig_stack = (
+            px.bar(pd.DataFrame({"kommun": [], "share": [], "huvudman_typ": []}),
+                   x="kommun", y="share", color="huvudman_typ", barmode="stack")
+            .update_layout(title="No data for this selection")
+        )
+       
         return
 
-    top_n = int(state.parent_choice_top_n)
+    # -------------------------
+    # Top N kommun (by total students)
+    # -------------------------
+    try:
+        top_n = int(state.parent_choice_top_n)
+    except Exception:
+        top_n = 10
 
-    # Top kommun by total students (stable)
-    top_kommun = (
+    totals = (
         df.groupby("kommun", as_index=False)["n_students"]
           .sum()
           .sort_values("n_students", ascending=False)
-          .head(top_n)["kommun"]
-          .tolist()
+          .head(top_n)
     )
+    top_kommun = totals["kommun"].tolist()
+    df_k = df[df["kommun"].isin(top_kommun)].copy()
 
-    df_k = df[df["kommun"].isin(top_kommun)]
+    # -------------------------
+    # Ensure share is valid (recompute if missing/bad)
+    # -------------------------
+    share_bad = ("share" not in df_k.columns) or df_k["share"].isna().any()
+    if share_bad:
+        denom = (
+            df_k.groupby(["kommun"], as_index=False)["n_students"]
+               .sum()
+               .rename(columns={"n_students": "total_students"})
+        )
+        df_k = df_k.merge(denom, on="kommun", how="left")
+        df_k["share"] = df_k["n_students"] / df_k["total_students"]
 
+    # -------------------------
+    # Order kommun by Enskild share (nice reading)
+    # -------------------------
+    pivot = (
+        df_k.pivot_table(index="kommun", columns="huvudman_typ", values="share", aggfunc="mean")
+          .fillna(0.0)
+    )
+    sort_col = "Enskild" if "Enskild" in pivot.columns else pivot.columns[0]
+    kommun_order = pivot.sort_values(sort_col, ascending=False).index.tolist()
+
+    # -------------------------
+    # Plot (100% stacked)
+    # -------------------------
     fig_stack = px.bar(
         df_k,
         x="kommun",
         y="share",
         color="huvudman_typ",
         barmode="stack",
+        category_orders={"kommun": kommun_order},
     )
 
+    # -------------------------
+    # Styling (clean & slim)
+    # -------------------------
     fig_stack.update_layout(
-        title=f"Parent choice by kommun (Top {top_n}) — Kommunal vs Enskild (Åk 1–9)",
-        xaxis_tickangle=-40,
+
+        height=380, 
+        bargap=0.38, 
+        bargroupgap=0.06,
+
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        legend=dict(orientation="h", y=1.02, x=0),
-        margin=dict(l=10, r=10, t=50, b=10),
+        margin=dict(l=70, r=20, t=70, b=85),
+
+        legend=dict(
+            orientation="h",
+            y=1.05,
+            x=0.0,
+            xanchor="left",
+            yanchor="bottom",
+            title_text="",
+            font=dict(size=12),
+        ),
+
+        modebar_remove=[
+            "zoom2d", "pan2d", "select2d", "lasso2d",
+            "zoomIn2d", "zoomOut2d", "autoScale2d", "resetScale2d"
+        ],
     )
+
     fig_stack.update_yaxes(
-        title_text="Share",
+        title_text="Share (%)",
         tickformat=".0%",
         range=[0, 1],
-        showgrid=True,
-        gridcolor="rgba(0,0,0,0.08)",
+        showgrid=False,
         zeroline=False,
+        showline=True,
+        linecolor="rgba(0,0,0,0.18)",
+        tickfont=dict(color="rgba(0,0,0,0.55)"),
+        title_font=dict(color="rgba(0,0,0,0.55)"),
+        automargin=True,
     )
-    fig_stack.update_xaxes(showgrid=False)
+
+    fig_stack.update_xaxes(
+        title_text="Municipality",
+        tickangle=-30,
+        showgrid=False,
+        zeroline=False,
+        showline=True,
+        linecolor="rgba(0,0,0,0.18)",
+        tickfont=dict(color="rgba(0,0,0,0.55)"),
+        title_font=dict(color="rgba(0,0,0,0.55)"),
+    )
+
+    fig_stack.update_traces(marker_line_width=0)
 
     state.parent_choice_fig_stack = fig_stack
+
+
+
+
 
     # =========================
     # 2) Trend over time — Enskild share per kommun (within selected län)
@@ -405,21 +543,31 @@ def refresh_parent_choice(state):
     )
 
     fig_trend.update_layout(
-        title=f"Trend över tid — Andel Enskild per kommun (Top {top_n}, Åk 1–9)",
+        title=f"How the Share of Independent Schools Has Changed Over Time",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         legend=dict(orientation="h", y=1.02, x=0),
         margin=dict(l=10, r=10, t=50, b=10),
+        showlegend=False
     )
     fig_trend.update_yaxes(
-        title_text="Share of Enskild",
+        title_text="Share of Students in Independent Schools (%)",
         tickformat=".0%",
-        range=[0, 1],
-        showgrid=True,
-        gridcolor="rgba(0,0,0,0.08)",
+        range=[0, df_plot["share"].max() * 1.15],
+        showgrid=False,
         zeroline=False,
+        showline=True,
+        linecolor="rgba(0,0,0,0.2)",
+        tickfont=dict(color="rgba(0,0,0,0.6)"),
     )
-    fig_trend.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
+    
+    fig_trend.update_xaxes(    
+        title_text="Year",
+        showgrid=False,
+        showline=True,
+        linecolor="rgba(0,0,0,0.2)",
+        tickfont=dict(color="rgba(0,0,0,0.6)"),
+    )
 
     state.parent_choice_fig_trend = fig_trend
 

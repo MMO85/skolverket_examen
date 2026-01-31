@@ -27,7 +27,14 @@ with tgb.Page() as kpi_trend_page:
     on_change=on_change_trend,
 )
                 #tgb.selector(value="{trend_kommun}", lov=kommun_list, dropdown=True, label="Kommun", on_change=on_change_trend)
-                tgb.selector(value="{trend_huvudman}", lov=huvudman_list, dropdown=True, label="Huvudman", on_change=on_change_trend)
+                tgb.selector(
+    value="{trend_huvudman}",
+    lov=huvudman_list,
+    dropdown=True,
+    label="Huvudman",
+    on_change=on_change_trend,
+    active="{trend_subject == 'All'}"
+)
                 tgb.selector(value="{trend_subject}", lov=subject_list, dropdown=True, label="Subject", on_change=on_change_trend)
                 #tgb.selector(value="{trend_metric}", lov=trend_metrics_lov, dropdown=True, label="Metric", on_change=on_change_trend)
 
