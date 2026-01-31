@@ -543,31 +543,48 @@ def refresh_parent_choice(state):
     )
 
     fig_trend.update_layout(
-        title=f"How the Share of Independent Schools Has Changed Over Time",
+        title=dict(
+            text="Trend in Independent School Enrollment Over Time",
+            x=0,
+            xanchor="left",
+            font=dict(size=20)
+    
+    ) ,  
+        height=380,
+        margin=dict(l=70, r=20, t=50, b=40),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        legend=dict(orientation="h", y=1.02, x=0),
-        margin=dict(l=10, r=10, t=50, b=10),
-        showlegend=False
-    )
-    fig_trend.update_yaxes(
-        title_text="Share of Students in Independent Schools (%)",
-        tickformat=".0%",
-        range=[0, df_plot["share"].max() * 1.15],
+        showlegend=False,   # 👈 legend حذف
+    
+)
+    fig_trend.update_xaxes(
         showgrid=False,
         zeroline=False,
         showline=True,
         linecolor="rgba(0,0,0,0.2)",
         tickfont=dict(color="rgba(0,0,0,0.6)"),
-    )
+        title_font=dict(color="rgba(0,0,0,0.6)"),
+        dtick=1,
+)
+
     
-    fig_trend.update_xaxes(    
-        title_text="Year",
+    max_share = df_k["share"].max()  # یا df_plot اگر اسمش اونه
+
+    fig_trend.update_yaxes(
+        title_text="Share of Independent Schools",
+        tickformat=".0%",
+        range=[0, max_share * 1.15],
         showgrid=False,
+        zeroline=False,
         showline=True,
         linecolor="rgba(0,0,0,0.2)",
         tickfont=dict(color="rgba(0,0,0,0.6)"),
+        title_font=dict(color="rgba(0,0,0,0.6)"),
     )
+    fig_trend.update_traces(
+        line=dict(width=2),
+)
+
 
     state.parent_choice_fig_trend = fig_trend
 
