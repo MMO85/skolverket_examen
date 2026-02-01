@@ -253,19 +253,50 @@ def build_top_bottom_budget(df_budget: pd.DataFrame, n: int) -> tuple["px.Figure
         x="totalt_per_elev",
         y="kommun",
         orientation="h",
-        title=f"Top {n} (högst budget per elev)",
-        labels={"kommun": "Kommun", "totalt_per_elev": "SEK per elev"},
+        title=f"Top {n} (highest budget per student)",
+        labels={"kommun": "Municipality", "totalt_per_elev": "SEK per student"},
     )
-    fig_top.update_layout(margin={"l": 0, "r": 0, "t": 60, "b": 0}, height=520)
 
     fig_bot = px.bar(
         bot.sort_values("totalt_per_elev", ascending=False),
         x="totalt_per_elev",
         y="kommun",
         orientation="h",
-        title=f"Bottom {n} (lägst budget per elev)",
-        labels={"kommun": "Kommun", "totalt_per_elev": "SEK per elev"},
+        title=f"Bottom {n} (lowest budget per student)",
+        labels={"kommun": "Municipality", "totalt_per_elev": "SEK per student"},
     )
-    fig_bot.update_layout(margin={"l": 0, "r": 0, "t": 60, "b": 0}, height=520)
+
+    # ---- shared styling (match other pages) ----
+    for fig in (fig_top, fig_bot):
+        fig.update_traces(width=0.45)  # thinner bars
+
+        fig.update_layout(
+            bargap=0.35,  # more space between bars
+            height=420,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            showlegend=False,
+            margin=dict(l=90, r=30, t=55, b=50),
+            title=dict(x=0.0, xanchor="left", font=dict(size=18)),
+        )
+
+        fig.update_xaxes(
+            title_text="SEK per student",
+            showgrid=False,
+            zeroline=False,
+            showline=True,
+            linecolor="rgba(0,0,0,0.2)",
+            tickfont=dict(color="rgba(0,0,0,0.6)"),
+            title_font=dict(color="rgba(0,0,0,0.6)"),
+        )
+
+        fig.update_yaxes(
+            title_text="Municipality",
+            automargin=True,
+            showgrid=False,
+            zeroline=False,
+            tickfont=dict(color="rgba(0,0,0,0.65)"),
+            title_font=dict(color="rgba(0,0,0,0.6)"),
+        )
 
     return fig_top, fig_bot
