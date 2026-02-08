@@ -1,0 +1,123 @@
+skolverket_examen/
+├── app/
+│   ├── geo/
+│   │   ├── processed/
+│   │   │   ├── kommuner.parquet
+│   │   │   ├── kommuner_simplified.geojson
+│   │   │   ├── lan.parquet
+│   │   │   └── lan_simplified.geojson
+│   │   ├── raw/
+│   │   │   ├── kommuner.geojson
+│   │   │   └── lan.geojson
+│   │   ├── load_geo.py
+│   │   └── preprocess_geo.py
+│   ├── __init__.py
+│   ├── app.py
+│   ├── app_karta.py
+│   └── main.py
+├── assets/
+│   └── main.css
+├── backend/
+│   ├── __init__.py
+│   ├── charts.py
+│   ├── data_processing.py
+│   ├── db.py
+│   ├── inspect_db.py
+│   ├── updates.py
+│   └── utils.py
+├── data_extract_load/
+│   └── load_csv_data.py
+├── dbt_project/
+│   ├── marts/
+│   │   ├── mart_behorighet_national_gender_2024_25.sql
+│   │   ├── mart_budget_per_elev_kommun.sql
+│   │   ├── mart_budget_per_elev_kommun_latest.sql
+│   │   ├── mart_nationella_prov_ak9.sql
+│   │   ├── mart_parent_choice_ak1_9.sql
+│   │   ├── mart_parent_choice_ak9.sql
+│   │   ├── mart_parent_fairness_ak9.sql
+│   │   ├── mart_parent_trend_ak9.sql
+│   │   └── mart_ranked_kommun_ak9.sql
+│   ├── models/
+│   │   ├── marts/
+│   │   │   ├── mart_overview.sql
+│   │   │   └── mart_overview.yml
+│   │   └── silver/
+│   │       ├── slv_cleaned_data.sql
+│   │       └── slv_cleaned_data.yml
+│   ├── staging/
+│   │   ├── int_behorighet_2024_25_lines.sql
+│   │   ├── schema.yml
+│   │   ├── show_source_files.sql
+│   │   ├── show_source_files_behor.sql
+│   │   ├── src_skolverket.yml
+│   │   ├── stg_antal_elever_per_arskurs.sql
+│   │   ├── stg_antal_elever_per_arskurs_typed.sql
+│   │   ├── stg_behorighet_2024_25.sql
+│   │   ├── stg_kostnader_per_kommun.sql
+│   │   ├── stg_kostnader_per_kommun_typed.sql
+│   │   ├── stg_nationella_prov_ak9.sql
+│   │   ├── stg_nationella_prov_ak9_typed.sql
+│   │   ├── stg_personalstatistik.sql
+│   │   ├── stg_personalstatistik_typed.sql
+│   │   ├── stg_raw_data.sql
+│   │   └── stg_raw_data.yml
+│   ├── .user.yml
+│   ├── dbt_project.yml
+│   └── profiles.yml
+├── frontend/
+│   ├── pages/
+│   │   ├── __init__.py
+│   │   ├── behorighet_gender.py
+│   │   ├── extra.py
+│   │   ├── home.py
+│   │   ├── karta.py
+│   │   ├── kpi_fairness.py
+│   │   ├── kpi_parent_choice.py
+│   │   └── kpi_trend.py
+│   ├── theme/
+│   │   └── plotly_theme.py
+│   ├── __init__.py
+│   └── layout.py
+├── raw_data/
+│   ├── Grundskola - Antal elever per årskurs 2020 Kommun.csv
+│   ├── Grundskola - Antal elever per årskurs 2021 Kommun.csv
+│   ├── Grundskola - Antal elever per årskurs 2022 Kommun.csv
+│   ├── Grundskola - Antal elever per årskurs 2023 Kommun.csv
+│   ├── Grundskola - Antal elever per årskurs 2024 Kommun.csv
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), per kön 2025 Kommun.csv
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), per kön 2025 Kommun.xlsx
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), samtliga elever 2020 Kommun.csv
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), samtliga elever 2021 Kommun.csv
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), samtliga elever 2022 Kommun.csv
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), samtliga elever 2023 Kommun.csv
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), samtliga elever 2024 Kommun.csv
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), samtliga elever 2025 Kommun.csv
+│   ├── Grundskola - Betyg årskurs 6, andel som fått godkänt betyg (A-E), samtliga elever 2025 Kommun.xlsx
+│   ├── Grundskola - Jämförelse av betygsresultat över tid 2025 Kommun_Åk9.xlsx
+│   ├── Grundskola - Jämförelse av ämnesbetyg över tid 2025 Kommun_Åk9.csv
+│   ├── Grundskola - Kostnader per kommun 2024 Kommun.csv
+│   ├── Grundskola - Personalstatistik med lärarlegitimation och behörighet 2020 Kommun.csv
+│   ├── Grundskola - Personalstatistik med lärarlegitimation och behörighet 2021 Kommun.csv
+│   ├── Grundskola - Personalstatistik med lärarlegitimation och behörighet 2022 Kommun.csv
+│   ├── Grundskola - Personalstatistik med lärarlegitimation och behörighet 2023 Kommun.csv
+│   ├── Grundskola - Personalstatistik med lärarlegitimation och behörighet 2024 Kommun.csv
+│   ├── Grundskola - Resultat nationella prov årskurs 9, provbetyg per kön - Engelska, Matematik och Svenska_svenska som andraspråk 2018 Kommun.csv
+│   ├── Grundskola - Resultat nationella prov årskurs 9, provbetyg per kön - Engelska, Matematik och Svenska_svenska som andraspråk 2019 Kommun.csv
+│   ├── Grundskola - Resultat nationella prov årskurs 9, provbetyg per kön - Engelska, Matematik och Svenska_svenska som andraspråk 2022 Kommun.csv
+│   ├── Grundskola - Resultat nationella prov årskurs 9, provbetyg per kön - Engelska, Matematik och Svenska_svenska som andraspråk 2023 Kommun.csv
+│   ├── Grundskola - Resultat nationella prov årskurs 9, provbetyg per kön - Engelska, Matematik och Svenska_svenska som andraspråk 2024 Kommun.csv
+│   ├── Gymnasieskola - Kostnader per kommun 2020 Kommun.csv
+│   ├── Gymnasieskola - Kostnader per kommun 2021 Kommun.csv
+│   ├── Gymnasieskola - Kostnader per kommun 2022 Kommun.csv
+│   ├── Gymnasieskola - Kostnader per kommun 2023 Kommun.csv
+│   └── behorighet_grundskola_2024_25.csv
+├── storytelling/
+│   └── storytelling.ipynb
+├── .gitattributes
+├── .gitignore
+├── README.md
+├── config.py
+├── dbt_project.yml
+├── preprocess_geo.py
+└── requirements.txt
