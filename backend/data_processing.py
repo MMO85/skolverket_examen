@@ -201,7 +201,7 @@ def build_karta_budget_figure(year: int) -> tuple["px.Figure", pd.DataFrame]:
     """)
 
     if df.empty:
-        fig = px.scatter(title=f"Budget per elev – {year} (no data)")
+        fig = px.scatter(title=f"Spending per student(SEK) – {year} (no data)")
         return fig, df
 
     df["kommun_kod"] = df["kommun_kod"].astype(str).str.zfill(4)
@@ -225,7 +225,7 @@ def build_karta_budget_figure(year: int) -> tuple["px.Figure", pd.DataFrame]:
         center=DEFAULT_CENTER,
         zoom=float(DEFAULT_ZOOM),
         opacity=0.80,
-        title=f"Budget per elev – {year}",
+        title=f"Spending per student(SEK) – {year}",
     )
 
     fig.update_layout(
@@ -271,13 +271,22 @@ def build_top_bottom_budget(df_budget: pd.DataFrame, n: int) -> tuple["px.Figure
         fig.update_traces(width=0.45)  # thinner bars
 
         fig.update_layout(
-            bargap=0.35,  # more space between bars
+            bargap=0.10,  
             height=420,
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
             showlegend=False,
-            margin=dict(l=90, r=30, t=55, b=50),
-            title=dict(x=0.0, xanchor="left", font=dict(size=18)),
+            margin=dict(l=20, r=30, t=55, b=50),
+            title=dict(
+                text="Top 10 (highest budget per student)",
+                x=0.18,          
+                xanchor="left",
+                y=0.98,
+                yanchor="top",
+                
+    ),
+            
+            
         )
 
         fig.update_xaxes(
@@ -288,7 +297,7 @@ def build_top_bottom_budget(df_budget: pd.DataFrame, n: int) -> tuple["px.Figure
             linecolor="rgba(0,0,0,0.2)",
             tickfont=dict(color="rgba(0,0,0,0.6)"),
             title_font=dict(color="rgba(0,0,0,0.6)"),
-        )
+            title_standoff=20,       )
 
         fig.update_yaxes(
             title_text="Municipality",
@@ -297,6 +306,9 @@ def build_top_bottom_budget(df_budget: pd.DataFrame, n: int) -> tuple["px.Figure
             zeroline=False,
             tickfont=dict(color="rgba(0,0,0,0.65)"),
             title_font=dict(color="rgba(0,0,0,0.6)"),
+            ticklabelstandoff=12,   
+            showline=True,
+            linewidth=0,
         )
 
     return fig_top, fig_bot

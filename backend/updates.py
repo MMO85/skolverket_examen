@@ -554,7 +554,7 @@ def refresh_parent_choice(state):
         margin=dict(l=70, r=20, t=50, b=40),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        showlegend=False,   # 👈 legend حذف
+        showlegend=False,  
     
 )
     fig_trend.update_xaxes(
@@ -568,7 +568,7 @@ def refresh_parent_choice(state):
 )
 
     
-    max_share = df_k["share"].max()  # یا df_plot اگر اسمش اونه
+    max_share = df_k["share"].max()  
 
     fig_trend.update_yaxes(
         title_text="Share of Independent Schools",
@@ -610,7 +610,7 @@ def refresh_karta(state):
     - Top 10 / Bottom 10
     """
 
-    # آخرین سال موجود را مستقیم از DB می‌گیریم
+    
     dfy = query_df("""
         select max(lasar_start) as y
         from main.mart_budget_per_elev_kommun

@@ -74,7 +74,7 @@ def chart_behorighet_gender(df: pd.DataFrame):
         automargin=True,
     )
     fig.update_traces(
-        width=0.25   # مقدار خوب: بین 0.25 تا 0.35
+        width=0.25   
 )
 
     return fig
