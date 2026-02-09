@@ -1,296 +1,108 @@
 # skolverket_examen
-CSV-pipeline med DLT och DuckDB
 
-Det här projektet innehåller en pipeline för dataladdning byggd med DLT (Data Load Tool) och DuckDB som mål. Pipelinens syfte är att läsa in råa CSV-filer från mappen raw_data/ och lagra dem i en lokal DuckDB-databas för vidare bearbetning.
+Ett lokalt, reproducerbart end-to-end-projekt som visar hur man går från Skolverkets öppna CSV-filer till en körbar analysdashboard.
 
-Mappstruktur
-project_root/
-│
-├── data_extract_load/
-│     └── load_csv_data.py        # Huvudscript för att ladda in CSV-filer
-│
-├── raw_data/                     # Rådata i CSV-format
-│
-├── requirements.txt
-└── README.md
+Pipeline (översikt):
+1) **DLT** läser alla filer i `raw_data/` och laddar dem till **DuckDB** (`staging_data.raw_data`)
+2) **dbt** transformerar `raw_data` → `stg_*` (staging) → `slv_*` (silver) → `mart_*` (analysmarts)
+3) **Geo-preprocess** förbereder kommun-/län-geometrier för kartvyer
+4) **App** (Taipy) visualiserar trender, könsskillnader, skolval, behörighet och budgetkarta
 
-Förutsättningar
+---
 
-Skapa och aktivera ett virtual environment
+## Teknikstack
 
-Installera beroenden:
+- Python (3.10+)
+- DuckDB (lokal analytisk databas)
+- DLT (ingestion)
+- dbt + duckdb-adapter (modellering)
+- GeoPandas + Plotly (kartor/figurer)
+- Taipy (dashboard)
+- Git/GitHub (versionshantering)
 
-pip install -r requirements.txt
+---
 
+## Projektstruktur (kort)
 
-requirements.txts innehålla:
-
-dlt
-pandas
-duckdb
-
-Om load_csv_data.py
-
-Scriptet gör följande:
-
-Letar upp alla CSV-filer i mappen raw_data/
-
-Läser varje fil med en flexibel Pythontolkare för att undvika läsfel
-
-Konverterar alla kolumner till text för att undvika schema-konflikter mellan olika CSV-filer
-
-Lägger till filnamnet som en extra kolumn
-
-Kör DLT-pipen och laddar datan till DuckDB
-
-Skapar den lokala databasen:
-
-csv_ingestion_pipeline.duckdb
-
-Så kör du pipelinen
-
-I projektroten, kör:
-
-python data_extract_load/load_csv_data.py
---$ python -c "import duckdb; con=duckdb.connect('csv_ingestion_pipeline.duckdb'); print(con.execute(\"select count(distinct _dlt_load_id) from staging_data.raw_data\").fetchone())"
-(1,) den 1 an är rätt svar. 
-(.venv)
-
-Vid lyckad körning visas ett meddelande i stil med:
-
-CSV data loaded successfully via DLT.
-
-Inspektera datan i DuckDB
-
-Starta Python och kör exempelvis:
-
-import duckdb
-con = duckdb.connect("csv_ingestion_pipeline.duckdb")
-con.execute("SELECT * FROM staging_data.raw_data LIMIT 10").fetchall()
-
-
-Då kan du verifiera att datan har laddats korrekt.
-
-Övrigt:
-
-Alla CSV-filer laddas in oavsett om deras kolumnstrukturer skiljer sig åt.
-
-Konvertering till textformat är avsiktligt och följer principen för rådata (raw layer).
-
-Pipeline-utdata kan senare användas för att bygga silver-lager, datamodeller eller analyser.
-
--------------------------------------------------------------
-
-DBT: ###  jag har ändrat några path, ser så här ut nedan, men vi kan fixa senare hela snyggare. 
-Projektstruktur (kort)
 skolverket_examen/
-├── data_extract_load/        # DLT-pipeline (CSV → DuckDB)
-├── raw_data/                 # Rå CSV-filer (lokalt)
-├── csv_ingestion_pipeline.duckdb
-├── dbt_project/              # dbt-projekt
-│   ├── dbt_project.yml
-│   ├── staging/
-│   ├── models/
-│   └── marts/
-├── requirements.txt
-└── README.md
+├─ raw_data/ # Rådata (CSV/XLSX)
+├─ data_extract_load/ # DLT-pipeline
+│ └─ load_csv_data.py
+├─ csv_ingestion_pipeline.duckdb
+├─ dbt_project/ # dbt-projekt
+│ ├─ dbt_project.yml
+│ ├─ profiles.yml
+│ ├─ staging/
+│ ├─ models/
+│ └─ marts/
+├─ app/ # App entrypoints + geo
+│ ├─ main.py
+│ ├─ app.py
+│ ├─ app_karta.py
+│ └─ geo/
+├─ backend/ # Processing, charts, DB, state updates
+├─ frontend/ # Pages, layout, theme
+├─ assets/ # CSS
+└─ storytelling/ # Notebook/analys
 
-Förutsättningar : Python 3.10+, Git, Windows (Git Bash eller PowerShell funkar)
 
-Så kör du projektet (från noll)
-1️. Skapa och aktivera virtual environment
+---
+
+## Förutsättningar
+
+- Python 3.10+
+- Git
+- Windows: PowerShell eller Git Bash
+
+---
+
+## Installation
+
+### 1) Skapa och aktivera virtual environment
+
+PowerShell:
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+Git Bash:
+
 python -m venv .venv
 source .venv/Scripts/activate
-
-2️. Installera beroenden
+2) Installera beroenden
 python -m pip install -r requirements.txt
-
- Steg 1: Ladda data med DLT
-
-Detta läser alla CSV-filer i raw_data/ och skapar/uppdaterar DuckDB-filen.
+Steg 1: Ladda data med DLT (CSV → DuckDB)
+Kör från repo-roten:
 
 python data_extract_load/load_csv_data.py
+Scriptet gör i korthet:
 
+hittar alla CSV-filer i raw_data/
 
-Resultat:
+läser varje fil robust (för att minska läsfel)
 
-csv_ingestion_pipeline.duckdb skapas/uppdateras
+konverterar kolumner till text för att undvika schema-konflikter
 
-Tabellen staging_data.raw_data innehåller:
+lägger till filnamn som kolumn (t.ex. source_file)
 
-raw_line
+laddar data till DuckDB: csv_ingestion_pipeline.duckdb
 
-source_file
+skriver rådata till staging_data.raw_data
 
-Steg 2: Konfigurera dbt (en gång per dator)  اینجا برای ت هم مهمە
-
-Skapa filen:
-
-~/.dbt/profiles.yml
-
-
-Innehåll:
-
-skolverket_examen:
-  target: dev
-  outputs:
-    dev:
-      type: duckdb
-      path: ../csv_ingestion_pipeline.duckdb
-      schema: staging_data
-
-Steg 3: Kör dbt (staging → silver → marts)
-
-Gå in i dbt-mappen:
+Snabbcheck: finns data?
+python -c "import duckdb; con=duckdb.connect('csv_ingestion_pipeline.duckdb'); print(con.execute(\"select count(*) from staging_data.raw_data\").fetchone())"
+Snabbcheck: antal körningar (_dlt_load_id)
+python -c "import duckdb; con=duckdb.connect('csv_ingestion_pipeline.duckdb'); print(con.execute(\"select count(distinct _dlt_load_id) from staging_data.raw_data\").fetchone())"
+Steg 2: dbt (staging → silver → marts)
+Rekommenderat: använd projektets profiles.yml
+I den här setupen kör du dbt med --profiles-dir . från dbt_project/ så att dbt alltid använder projektets profil.
 
 cd dbt_project
+python -m dbt.cli.main debug --profiles-dir .
+python -m dbt.cli.main run   --profiles-dir .
+python -m dbt.cli.main test  --profiles-dir .
+Om allt är rätt ska dbt test ge PASS på testerna.
 
-
-Kör modeller:
-
-python -m dbt.cli.main run --profiles-dir "$USERPROFILE/.dbt"
-
-
-Kör tester:
-
-python -m dbt.cli.main test --profiles-dir "$USERPROFILE/.dbt"
-
-
-Om allt är rätt ska:
-
-dbt run bygga 16 modeller
-
-dbt test ge PASS på alla tester
-
-Designprinciper (viktigt för grupparbete)
-
-stg_raw_data
-Endast rådata (raw_line, source_file)
- ingen parsing
-
-slv_cleaned_data
-Första “rensade” lagret
- URL extraheras här
-url_value är valfri (kan vara NULL)
-
-schema & sources
-
-Inga hårdkodade scheman (main)
-
-{{ target.schema }} används överallt
-
-Lokala filer ignoreras
-
-.duckdb
-
-target/
-
-logs/
-→ inga binära merge-konflikter
-
- Vanliga problem
-
-dbt.exe funkar inte på Windows
-→ använd alltid:
-
-python -m dbt.cli.main ...
-
-
-dbt hittar inte projektet
-→ se till att du kör kommandon inifrån dbt_project/
-
---- Status
-
-✔ DLT pipeline fungerar
-✔ dbt run & test gröna
-✔ Team-safe setup
--------------------------------------------------------
-stremlit app/app.py
-Data ingestion (DLT)
-
-Transformation & modeller (dbt + DuckDB)
-
-Visualisering (Streamlit + Plotly + GeoData)
-
-🧱 Systemöversikt
-
-Teknikstack
-
-Python 3.11
-
-DuckDB (lokal analytisk databas)
-
-DLT (data ingestion)
-
-dbt (staging + marts)
-
-Streamlit (dashboard)
-
-GeoPandas + Plotly (kartvisualisering)
-
-Git / GitHub (versionshantering)
-
- Projektstruktur
-skolverket_examen/
-│
-├── app/
-│   ├── app.py                  # Streamlit-dashboard
-│   └── geo/
-│       ├── raw/                # Original geojson (kommuner, län)
-│       ├── processed/          # Förenklad geo-data (parquet + geojson)
-│       ├── preprocess_geo.py   # Rensar & standardiserar geo-data
-│       └── load_geo.py
-│
-├── data_extract_load/
-│   └── load_csv_data.py        # DLT-pipeline (CSV → DuckDB)
-│
-├── dbt_project/
-│   ├── models/
-│   │   ├── staging/
-│   │   └── marts/
-│   └── dbt_project.yml
-│
-├── csv_ingestion_pipeline.duckdb
-├── requirements.txt
-├── README.md
-└── .gitignore
-
-🔄 Dataflöde (Steg för steg)
-1️⃣ Data ingestion – DLT
-
-Skolverkets CSV-filer laddas till DuckDB via DLT.
-
-source .venv/Scripts/activate
-python data_extract_load/load_csv_data.py
-
-
-Resultat:
-
-DuckDB-fil skapas/uppdateras:
-
-csv_ingestion_pipeline.duckdb
-
-
-Rådata hamnar i schema staging_data
-
-2️⃣ Transformation – dbt
-
-dbt används för:
-
-Staging (rensning, typning)
-
-Business logic
-
-Analytiska marts
-
-cd dbt_project
-python -m dbt.cli.main debug --profiles-dir "$USERPROFILE/.dbt"
-python -m dbt.cli.main run   --profiles-dir "$USERPROFILE/.dbt"
-python -m dbt.cli.main test  --profiles-dir "$USERPROFILE/.dbt"
-
-
-Exempel på marts:
-
+Exempel på centrala marts
 mart_ranked_kommun_ak9
 
 mart_nationella_prov_ak9
@@ -299,282 +111,91 @@ mart_parent_trend_ak9
 
 mart_parent_fairness_ak9
 
-3️⃣ Geo-data – Kommuner & Län
+mart_budget_per_elev_kommun
 
-Sveriges kommun- och länsgränser används för kartan.
-
-Rådata
+Steg 3: Geo-data (kommuner & län)
+Rå geo:
 
 app/geo/raw/kommuner.geojson
 
 app/geo/raw/lan.geojson
 
-Bearbetning
-
-Geo-datan:
-
-projiceras till WGS84
-
-trasiga geometrier fixas
-
-förenklas (för prestanda)
-
-standardiseras så att kolumner matchar dbt-data
+Preprocess (bygger om/uppdaterar förenklade filer):
 
 python app/geo/preprocess_geo.py
+Output (för prestanda i kartor):
 
+app/geo/processed/kommuner.parquet
 
-Resultat:
+app/geo/processed/lan.parquet
 
-app/geo/processed/
-├── kommuner.parquet   # kolumner: kommun, kommun_kod, lan_kod, geometry
-├── lan.parquet        # kolumner: lan, lan_kod, geometry
+(ev. förenklade geojson beroende på implementation)
 
-🗺️ Dashboard – Streamlit
+Steg 4: Starta dashboarden (Taipy)
+Kör från repo-roten:
 
-Dashboarden visar:
+python -m app.main
+Dashboarden innehåller vyer för:
 
-🗺️ Karta
+Results over time (Åk 9)
 
-Choropleth-karta över Sveriges kommuner
+Gender gap
 
-Färg baserat på score_0_100 (åk 9)
+School choice
 
-Filter:
+High school eligibility
 
-Läsår
+Budget map (karta)
 
-Ämne
+Designprinciper (viktigt i grupparbete)
+Raw layer först: staging_data.raw_data är rådata (minimalt tolkad).
 
-Huvudman
+All logik i dbt: typning, rensning och business logic i stg_*, slv_*, mart_*.
 
-🏆 Ranking
+Inga hårdkodade scheman: använd {{ target.schema }} i SQL där det behövs.
 
-Topp/Nedersta kommuner
+Undvik binära merge-konflikter: checka inte in lokala artefakter:
 
-Jämförelser inom län och nationellt
+*.duckdb
 
-🧾 Overview
+target/
 
-Textdata och metadata från källfiler
+logs/
 
-Starta dashboarden från projektroten:
-
-python -m streamlit run app/app.py
-
-✅ Kvalitet & Robusthet
-
-dbt tester (not_null, m.fl.)
-
-Säker SQL-escape i Streamlit
-
-Tydlig matchning mellan geo-data och dbt-marts
-
-Debug-sektion för att visa om kommuner saknar matchning
-#
-## Streamlit 
-python app/geo/process_geo.py
-python -m streamlit run app/app.py
-
-
-🎯 Sammanfattning
-
-Detta projekt demonstrerar:
-
-End-to-end data engineering
-
-Analytisk modellering med dbt
-
-Geografisk visualisering
-
-Tydlig separation mellan ingestion, transformation och presentation
-
-Allt körbart lokalt, reproducerbart och granskningsbart.
---------------------------
-
-
-
-
-
-karta.
-# Skolverket Examen – DuckDB + dlt + dbt + Streamlit
-
-Det här projektet bygger en liten, reproducerbar datapipeline för Skolverkets öppna CSV:er:
-
-1) **DLT** läser alla CSV-filer i `raw_data/` och laddar raderna till **DuckDB** (`staging_data.raw_data`)  
-2) Vi **synkar** alltid databasen till *senaste* körningen (så att inga gamla rader ligger kvar)  
-3) **dbt** transformerar `raw_data` → `stg_*` (staging) → `marts` (analysmodeller)  
-4) **Streamlit** visar Sverigekarta per kommun + jämförelse Top/Bottom
-
----
-
-## Projektstruktur (översikt)
-
-- `raw_data/` – dina CSV-filer (in-data)
-- `csv_ingestion_pipeline.duckdb` – DuckDB-databasen (skapas/uppdateras)
-- `data_extract_load/load_csv_data.py` – kör DLT + sync + dbt run/test (end-to-end)
-- `dbt_project/` – dbt-projekt (modeller, macros, profiles.yml, dbt_project.yml)
-- `app/app_karta.py` – Streamlit-dashboard (karta + jämförelser)
-- `app/geo/processed/kommuner.parquet` – kommungeometri för kartan
-- `preprocess_geo.py` – (om du behöver bygga om geodata/parquet)
-
----
-
-## Förkrav
-
-- Python 3.12+
-- Git
-- (Windows) PowerShell/Windows Terminal rekommenderas. MSYS/Git Bash funkar men kan ge “Permission denied” på vissa entrypoints.
-
----
-
-## Installation
-
-### 1) Skapa och aktivera venv
-
-**Windows (PowerShell):**
-```bash
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-Git Bash/MSYS:
-
-bash
-Kopiera kod
-python -m venv .venv
-source .venv/Scripts/activate
-2) Installera dependencies
-bash
-Kopiera kod
-pip install -r requirements.txt
-Exakta Python-paket (från requirements.txt)
-Nedan visas exakt innehåll från requirements.txt i repo-root.
-
-<!-- REQUIREMENTS_START -->
-txt
-Kopiera kod
-(autogenereras från requirements.txt)
-<!-- REQUIREMENTS_END -->
-Uppdatera paketlistan i README automatiskt
-Kör ett av följande (beroende på terminal):
-
-Git Bash/MSYS (från repo-root):
-
-bash
-Kopiera kod
-python - <<'PY'
-from pathlib import Path
-req = Path("requirements.txt").read_text(encoding="utf-8").rstrip()
-readme = Path("README.md").read_text(encoding="utf-8")
-
-start = "<!-- REQUIREMENTS_START -->"
-end = "<!-- REQUIREMENTS_END -->"
-
-before = readme.split(start)[0] + start
-after = readme.split(end)[1]
-block = "\n```txt\n" + req + "\n```\n"
-
-Path("README.md").write_text(before + "\n" + block + end + after, encoding="utf-8")
-print("README.md uppdaterad med requirements.txt ✅")
-PY
-PowerShell (från repo-root):
-
-powershell
-Kopiera kod
-python -c @"
-from pathlib import Path
-req = Path('requirements.txt').read_text(encoding='utf-8').rstrip()
-readme = Path('README.md').read_text(encoding='utf-8')
-start = '<!-- REQUIREMENTS_START -->'
-end   = '<!-- REQUIREMENTS_END -->'
-before = readme.split(start)[0] + start
-after  = readme.split(end)[1]
-block = '\n```txt\n' + req + '\n```\n'
-Path('README.md').write_text(before + '\n' + block + end + after, encoding='utf-8')
-print('README.md uppdaterad med requirements.txt ✅')
-"@
-Körflöde (rekommenderat)
-1) Ladda data + sync + dbt (allt i ett)
-bash
-Kopiera kod
-python data_extract_load/load_csv_data.py
-Vad scriptet gör:
-
-Läser alla CSV i raw_data/
-
-Laddar rader till staging_data.raw_data via dlt
-
-Tar bort allt utom senaste _dlt_load_id (så databasen alltid matchar senaste ingestion)
-
-Kör:
-
-python -m dbt.cli.main run
-
-python -m dbt.cli.main test
-
-Scriptet sätter DBT_PROFILES_DIR till dbt_project/ så att dbt alltid hittar rätt profiles.yml.
-
-2) Starta Streamlit-dashboard
-Kör från repo-root:
-
-bash
-Kopiera kod
-python -m streamlit run app/app_karta.py
-Om du får Permission denied på streamlit-kommandot (vanligt i MSYS):
-
-använd alltid python -m streamlit ... som ovan.
-
-dbt – modeller och materialisering
-Staging-modeller (stg_*) är byggda för att vara snabba och lätta (ofta view)
-
-Marts (mart_*) är tabeller för stabil analys/prestanda
-
-Centrala modeller:
-
-mart_ranked_kommun_ak9 – ranking/score per kommun (åk9)
-
-mart_budget_per_elev_kommun – budget per elev per kommun och läsår
-
-Streamlit – vad som visas
-Dashboarden har vyer för:
-
-Karta (Ranking) – choropleth över kommuner med blå färgskala
-
-Karta (Budget per elev) – choropleth + Top/Bottom-jämförelse mellan kommuner
-
-Målet är att endast visa Sverigekartan (inte världskartan). Kartans center/zoom är inställd för Sverige.
-
-Snabbcheck
-Har vi data?
-
-bash
-Kopiera kod
-python -c "import duckdb; con=duckdb.connect('csv_ingestion_pipeline.duckdb'); print(con.execute(\"select count(*) from staging_data.raw_data\").fetchone())"
-Finns mart-tabellerna?
-
-bash
-Kopiera kod
-python -c "import duckdb; con=duckdb.connect('csv_ingestion_pipeline.duckdb'); print(con.execute(\"select table_name, table_type from information_schema.tables where table_schema='staging_data' and table_name like 'mart_%' order by 1\").fetchall())"
 Vanliga problem & fixar
-dbt hittas inte / fel modul
+dbt fungerar inte som dbt.exe på Windows
 Använd alltid:
 
-bash
-Kopiera kod
-python -m dbt.cli.main --version
-python -m dbt.cli.main run
-python -m dbt.cli.main test
-dbt kan inte läsa profiles.yml
-bash
-Kopiera kod
-cd dbt_project
-export DBT_PROFILES_DIR="$(pwd)"
-python -m dbt.cli.main debug
-dbt kan inte öppna DuckDB-filen (fel sökväg)
-Kontrollera path: i output från python -m dbt.cli.main debug.
+python -m dbt.cli.main ...
+dbt hittar inte profiles.yml
+Kör kommandon från dbt_project/ och ange:
+
+python -m dbt.cli.main run --profiles-dir .
+Appen hittar inte moduler (t.ex. frontend)
+Kör från repo-roten och som modul:
+
+python -m app.main
+DuckDB-path fel i dbt
+Öppna dbt_project/profiles.yml och kontrollera att path: pekar på rätt csv_ingestion_pipeline.duckdb (relativt dbt_project/).
+
+Status
+✔ DLT pipeline fungerar (CSV → DuckDB)
+
+✔ dbt run & test (staging/silver/marts)
+
+✔ Geo-preprocess för kartor
+
+✔ Dashboard (Taipy) med flera analysvyer
 
 Nästa steg (förbättringar)
-“Klick på kommun → detaljer” (trend/tooltip + småkort)
+Klick på kommun → drilldown (detaljkort + tooltips)
 
-Mer dbt-testning (uniqueness på kommun_kod + lasar_start, not_null på viktiga mått)
+Utöka dbt-testning (uniqueness + not_null på fler nycklar/mått)
 
-Deployment (Streamlit Community Cloud / Docker)
+Deployment (Docker/Cloud)
+
+Utöka dataset (fler år/indikatorer)
+
+
+Om du vill kan jag också anpassa README:n 1:1 mot exakt hur din `load_csv_data.py` beter sig (t.ex. om den synkar/”rensar gamla loads”, exakt vilka kolumner som finns i `staging_data.raw_data`, och om ni kör Taipy-only eller även har kvar Streamlit).
+::contentReference[oaicite:0]{index=0}
